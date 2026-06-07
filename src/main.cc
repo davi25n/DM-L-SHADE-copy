@@ -44,7 +44,25 @@ int main(int argc, char **argv) {
   double clusters_rate = 0.1468;
   int mining_generation_step = 168;
 
-  for (int i = 0; i <= 30; i++) {
+  // Parse command-line arguments for function number
+  int function_start = 1;
+  int function_end = 30;
+  
+  for (int i = 1; i < argc; i++) {
+    if (strcmp(argv[i], "--f") == 0 && i + 1 < argc) {
+      int func_num = atoi(argv[i + 1]);
+      if (func_num >= 1 && func_num <= 30) {
+        function_start = func_num;
+        function_end = func_num;
+      } else {
+        cerr << "Invalid function number. Please use a value between 1 and 30." << endl;
+        return 1;
+      }
+      break;
+    }
+  }
+
+  for (int i = function_start - 1; i < function_end; i++) {
     g_function_number = i + 1;
     cout << "\n-------------------------------------------------------" << endl;
     cout << "Function = " << g_function_number << ", Dimension size = " << g_problem_size << "\n" << endl;
