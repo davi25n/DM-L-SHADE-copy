@@ -48,16 +48,16 @@ int main(int argc, char **argv) {
 
   // Parse command-line arguments for function number
   int function_start = 1;
-  int function_end = 30;
+  int function_end = 31;
   
   for (int i = 1; i < argc; i++) {
     if (strcmp(argv[i], "--f") == 0 && i + 1 < argc) {
       int func_num = atoi(argv[i + 1]);
-      if (func_num >= 1 && func_num <= 30) {
+      if (func_num >= 1 && func_num <= 31) {
         function_start = func_num;
         function_end = func_num;
       } else {
-        cerr << "Invalid function number. Please use a value between 1 and 30." << endl;
+        cerr << "Invalid function number. Please use a value between 1 and 31." << endl;
         return 1;
       }
       break;
