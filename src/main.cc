@@ -22,6 +22,8 @@ double g_arc_rate;
 int g_memory_size;
 double g_p_best_rate;
 
+void cleanup_binary_func();
+
 int main(int argc, char **argv) {
   //number of runs
   int num_runs = 51;
@@ -91,5 +93,6 @@ int main(int argc, char **argv) {
     free(bsf_fitness_array);
   }
 
+  cleanup_binary_func();
   return 0;
 }

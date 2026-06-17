@@ -15,6 +15,7 @@
 #define E  2.7182818284590452353602874713526625
 #define PI 3.1415926535897932384626433832795029
 
+double binary_hamming_func(double *x, int nx); /*função lacmor binario*/
 void sphere_func (double *, double *, int , double *,double *, int, int); /* Sphere */
 void ellips_func(double *, double *, int , double *,double *, int, int); /* Ellipsoidal */
 void bent_cigar_func(double *, double *, int , double *,double *, int, int); /* Discus */
@@ -51,6 +52,8 @@ void cf06 (double *, double *, int , double *,double *, int); /* Composition Fun
 void cf07 (double *, double *, int , double *,double *, int *, int); /* Composition Function 7 */
 void cf08 (double *, double *, int , double *,double *, int *, int); /* Composition Function 8 */
 
+static inline int encode_real_to_bit(double x);
+void init_binary_optimum(int nx);
 void shiftfunc (double*,double*,int,double*);
 void rotatefunc (double*,double*,int, double*);
 void sr_func (double *, double *, int, double*, double*, double, int, int); /* shift and rotate */
@@ -60,6 +63,9 @@ void cf_cal(double *, double *, int, double *,double *,double *,double *,int);
 
 extern double *OShift,*M,*y,*z,*x_bound;
 extern int ini_flag,n_flag,func_flag,*SS;
+
+static int *binary_optimum = NULL;
+static int binary_func_initialized = 0;
 
 
 void cec14_test_func(double *x, double *f, int nx, int mx,int func_num)
@@ -335,6 +341,9 @@ void cec14_test_func(double *x, double *f, int nx, int mx,int func_num)
 			cf08(&x[i*nx],&f[i],nx,OShift,M,SS,1);
 			f[i]+=3000.0;
 			break;
+		case 31:
+			f[0] = binary_hamming_func(x, nx);
+			break;
 		default:
 			printf("\nError: There are only 30 test functions in this test suite!\n");
 			f[i] = 0.0;
@@ -343,6 +352,27 @@ void cec14_test_func(double *x, double *f, int nx, int mx,int func_num)
 		
 	}
 
+}
+
+double binary_hamming_func(double *x, int nx) 
+{
+    // Inicializa o ótimo na primeira chamada
+    if (!binary_func_initialized) {
+        init_binary_optimum(nx);
+    }
+
+    double fitness = 0.0;
+
+    for (int i = 0; i < nx; i++) {
+        int bit = encode_real_to_bit(x[i]);
+
+        // Cada bit diferente do ótimo soma 1 ao erro
+        if (bit != binary_optimum[i]) {
+            fitness += 1.0;
+        }
+    }
+
+    return fitness;
 }
 
 void sphere_func (double *x, double *f, int nx, double *Os, double *Mr, int s_flag, int r_flag) /* Sphere */
@@ -1165,6 +1195,36 @@ void cf08 (double *x, double *f, int nx, double *Os,double *Mr,int *SS,int r_fla
 }
 
 
+
+void init_binary_optimum(int nx) /*Sorteia o vetor ótimo binário UMA VEZ antes da primeira avaliação.*/
+{
+    if (binary_optimum != NULL) {
+        free(binary_optimum);  // libera alocação anterior, se houver
+    }
+
+    // Aloca espaço para nx bits (armazenados como int: 0 ou 1)
+    binary_optimum = (int*)malloc(nx * sizeof(int));
+
+    // Sorteia cada posição: rand() % 2 retorna 0 ou 1
+    for (int i = 0; i < nx; i++) {
+        binary_optimum[i] = rand() % 2;
+    }
+
+    binary_func_initialized = 1;  // marca como inicializado
+}
+
+static inline int encode_real_to_bit(double x) /*codificador de real pra binario*/
+{
+    return (x > 0.0) ? 1 : 0;
+}
+void cleanup_binary_func() 
+{
+    if (binary_optimum != NULL) {
+        free(binary_optimum);
+        binary_optimum = NULL;
+        binary_func_initialized = 0;
+    }
+}
 
 void shiftfunc (double *x, double *xshift, int nx,double *Os)
 {
