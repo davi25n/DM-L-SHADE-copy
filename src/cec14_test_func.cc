@@ -351,7 +351,7 @@ void cec14_test_func(double *x, double *f, int nx, int mx,int func_num)
 			f[i]+=3000.0;
 			break;
 		case 31:
-			f[0] = binary_hamming_func(x, nx);
+			f[i] = binary_hamming_func(x, nx);
 			break;
 		default:
 			printf("\nError: There are only 30 test functions in this test suite!\n");
