@@ -25,6 +25,7 @@ double g_p_best_rate;
 void cleanup_binary_func();
 
 int main(int argc, char **argv) {
+  FILE *file = NULL;
   //number of runs
   int num_runs = 51;
     //dimension size. please select from 10, 30, 50, 100
@@ -62,7 +63,22 @@ int main(int argc, char **argv) {
       }
       break;
     }
+    else if (strcmp(argv[i], "--i") == 0 && i + 1 < argc) {
+      file = fopen(argv[i + 1], "r");
+      if (file == NULL)
+      {
+        cerr << "Error: Cannot open input file for reading." << endl;
+        return 1;
+      }
+    }
   }
+  if ((file == NULL) && (function_start != function_end)) {
+    cerr << "Error: No input file specified. Please use the --i option to provide an input file." << endl;
+    return 1;
+  }
+  if (file != NULL) {
+    fclose(file);
+  }//retirar quando o codigo para usar o file for implantado
 
   for (int i = function_start - 1; i < function_end; i++) {
     g_function_number = i + 1;
