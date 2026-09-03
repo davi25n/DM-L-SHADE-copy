@@ -67,6 +67,8 @@ extern int ini_flag,n_flag,func_flag,*SS;
 static int *binary_optimum = NULL;
 static int binary_func_initialized = 0;
 
+void npfs_test_func()
+{}
 
 void cec14_test_func(double *x, double *f, int nx, int mx,int func_num)
 {

@@ -57,6 +57,7 @@ namespace FlowShop {
                 // Remove espaços em branco
                 token.erase(remove_if(token.begin(), token.end(), ::isspace), token.end());
                 std::transform(token.begin(), token.end(), token.begin(), ::tolower);
+                //se der erro incluir quebra de linha
                 if (token.find("duedate") != std::string::npos) break;
             }
 

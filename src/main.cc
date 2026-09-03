@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
     cout  << "\nmean = " << mean_bsf_fitness << ", std = " << std_bsf_fitness << endl;
     free(bsf_fitness_array);
   }
-
+  //  incluir chamada das funções polinomiais do npfs_test_func()
   cleanup_binary_func();
   return 0;
 }
