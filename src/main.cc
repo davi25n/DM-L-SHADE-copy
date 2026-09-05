@@ -8,7 +8,9 @@
   Written by Ryoji Tanabe (rt.ryoji.tanabe [at] gmail.com)
 */
 #include <cstdio>
+#include <cstring>
 #include <fstream>
+#include <vector>
 #include "de.h"
 
 double *OShift,*M,*y,*z,*x_bound;
@@ -18,10 +20,11 @@ int g_function_number;
 int g_problem_size;
 unsigned int g_max_num_evaluations;
 
+const int MAX_JOBS = 500;
 unsigned int n_jobs;
 unsigned int n_machines;
-unsigned int jobs;
-unsigned int machines;
+unsigned int jobs[MAX_JOBS];
+
 
 int g_pop_size;
 double g_arc_rate;
@@ -32,6 +35,7 @@ void cleanup_binary_func();
 
 int main(int argc, char **argv) {
   std::ifstream file;
+  vector<vector<unsigned int>> jobs_machines;
   //number of runs
   int num_runs = 51;
     //dimension size. please select from 10, 30, 50, 100
@@ -121,27 +125,63 @@ int main(int argc, char **argv) {
       cerr << "Error: Invalid first line. Expected: jobs machines." << endl;
       return 1;//testa se a primeira linha do arquivo tem jobs e machines
     }
-    cout << "jobs = " << n_jobs << ", machines = " << n_machines << endl;
+    //print jobs and machines for debugging
+    //cout << "jobs = " << n_jobs << ", machines = " << n_machines << endl;
 
     // Read the second line (header) and ignore it
     file.getline(buffer, sizeof(buffer)); 
 
-    // Read every line of jobs and store in vector jobs
+    // Read every job line, one token at a time.
     for (int i = 0; i < n_jobs; ++i) {
       if (!file.getline(buffer, sizeof(buffer))) {
         cerr << "Error: Not enough lines in the input file for job data." << endl;
-        return 1;//testa se o arquivo tem linhas suficientes para os jobs
+        return 1;
       }
+      //separação dos elemento da linha por tokens
+      vector<unsigned int> values;
+      char *token = strtok(buffer, " \t");
+      while (token != NULL) {
+        unsigned int position = (unsigned int)strtoul(token, NULL, 10);
+        token = strtok(NULL, " \t");
+
+        if (token == NULL) {
+          cerr << "Error: Missing value in job line " << i + 1 << "." << endl;
+          return 1;
+        }
+
+        unsigned int value = (unsigned int)strtoul(token, NULL, 10);
+        values.push_back(value);
+        token = strtok(NULL, " \t");
+      }
+
+      // print job by job values  for debbuging
+      /*cout << "job " << i + 1 << ": ";
+      for (unsigned int value : values) {
+        cout << value << " ";
+      }
+      cout << endl;*/
+      jobs_machines.push_back(values);
+    }
+    // Read the line under jobs and ignore it
+    file.getline(buffer, sizeof(buffer)); 
+
+    // Read every job_time line and store the values of max time in the array
+    for (int i = 0; i < n_jobs; ++i) {
+      if(!file.getline(buffer, sizeof(buffer)) || sscanf(buffer, "%u", &jobs[i]) != 1) {
+        cerr << "Error: Not enough lines in the input file for job_time data." << endl;
+        return 1;
+      }
+    }
+
+    // Read every line and print the content
+    /*while (file.getline(buffer, sizeof(buffer))) {
       std::string linha(buffer);
       cout << linha << endl;
-    }
-    while (file.getline(buffer, sizeof(buffer))) {
-      std::string linha(buffer);
-      cout << linha << endl;
-    }
+    }*/
 
     //  incluir chamada das funções polinomiais do npfs_test_func()
   }
+  
   cleanup_binary_func();
   return 0;
 }
