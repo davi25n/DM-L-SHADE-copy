@@ -7,7 +7,8 @@
   Version: 1.1  Date: 9/Jun/2014
   Written by Ryoji Tanabe (rt.ryoji.tanabe [at] gmail.com)
 */
-
+#include <cstdio>
+#include <fstream>
 #include "de.h"
 
 double *OShift,*M,*y,*z,*x_bound;
@@ -17,6 +18,11 @@ int g_function_number;
 int g_problem_size;
 unsigned int g_max_num_evaluations;
 
+unsigned int n_jobs;
+unsigned int n_machines;
+unsigned int jobs;
+unsigned int machines;
+
 int g_pop_size;
 double g_arc_rate;
 int g_memory_size;
@@ -25,7 +31,7 @@ double g_p_best_rate;
 void cleanup_binary_func();
 
 int main(int argc, char **argv) {
-  FILE *file = NULL;
+  std::ifstream file;
   //number of runs
   int num_runs = 51;
     //dimension size. please select from 10, 30, 50, 100
@@ -64,51 +70,78 @@ int main(int argc, char **argv) {
       break;
     }
     else if (strcmp(argv[i], "--i") == 0 && i + 1 < argc) {
-      file = fopen(argv[i + 1], "r");
-      if (file == NULL)
-      {
+      file.open(argv[i + 1]);
+      if (!file.is_open()) {
         cerr << "Error: Cannot open input file for reading." << endl;
         return 1;
       }
     }
   }
-  if ((file == NULL) && (function_start != function_end)) {
+  if (!file.is_open() && (function_start != function_end)) {
     cerr << "Error: No input file specified. Please use the --i option to provide an input file." << endl;
     return 1;
   }
-  if (file != NULL) {
-    fclose(file);
-  }//retirar quando o codigo para usar o file for implantado
 
-  for (int i = function_start - 1; i < function_end; i++) {
-    g_function_number = i + 1;
-    cout << "\n-------------------------------------------------------" << endl;
-    cout << "Function = " << g_function_number << ", Dimension size = " << g_problem_size << "\n" << endl;
+  if (function_start==function_end) {//condicional para rodar todas as funcoes do CEC2014
+    for (int i = function_start - 1; i < function_end; i++) {
+      g_function_number = i + 1;
+      cout << "\n-------------------------------------------------------" << endl;
+      cout << "Function = " << g_function_number << ", Dimension size = " << g_problem_size << "\n" << endl;
 
-    Fitness *bsf_fitness_array = (Fitness*)malloc(sizeof(Fitness) * num_runs);
-    Fitness mean_bsf_fitness = 0;
-    Fitness std_bsf_fitness = 0;
+      Fitness *bsf_fitness_array = (Fitness*)malloc(sizeof(Fitness) * num_runs);
+      Fitness mean_bsf_fitness = 0;
+      Fitness std_bsf_fitness = 0;
 
-    for (int j = 0; j < num_runs; j++) { 
-      //searchAlgorithm *alg = new LSHADE();
-      int max_elite_size = std::round(elite_rate * g_pop_size);
-      int number_of_patterns = std::round(clusters_rate * max_elite_size);
-      searchAlgorithm *alg = new DMLSHADE(max_elite_size, number_of_patterns, mining_generation_step);
-      bsf_fitness_array[j] = alg->run();
-      cout << j + 1 << "th run, " << "error value = " << bsf_fitness_array[j] << endl;
+      for (int j = 0; j < num_runs; j++) { 
+        //searchAlgorithm *alg = new LSHADE();
+        int max_elite_size = std::round(elite_rate * g_pop_size);
+        int number_of_patterns = std::round(clusters_rate * max_elite_size);
+        searchAlgorithm *alg = new DMLSHADE(max_elite_size, number_of_patterns, mining_generation_step);
+        bsf_fitness_array[j] = alg->run();
+        cout << j + 1 << "th run, " << "error value = " << bsf_fitness_array[j] << endl;
+      }
+    
+      for (int j = 0; j < num_runs; j++) mean_bsf_fitness += bsf_fitness_array[j];
+      mean_bsf_fitness /= num_runs;
+
+      for (int j = 0; j < num_runs; j++) std_bsf_fitness += pow((mean_bsf_fitness - bsf_fitness_array[j]), 2.0);
+      std_bsf_fitness /= num_runs;
+      std_bsf_fitness = sqrt(std_bsf_fitness);
+
+      cout  << "\nmean = " << mean_bsf_fitness << ", std = " << std_bsf_fitness << endl;
+      free(bsf_fitness_array);
     }
-  
-    for (int j = 0; j < num_runs; j++) mean_bsf_fitness += bsf_fitness_array[j];
-    mean_bsf_fitness /= num_runs;
+  } 
+  else {//condicional para rodar as instancias polinomiais
 
-    for (int j = 0; j < num_runs; j++) std_bsf_fitness += pow((mean_bsf_fitness - bsf_fitness_array[j]), 2.0);
-    std_bsf_fitness /= num_runs;
-    std_bsf_fitness = sqrt(std_bsf_fitness);
+    char buffer[1024];
+    
+    //le a primeira linha do arquivo e divide jobs e machines
+    if (!file.getline(buffer, sizeof(buffer)) || sscanf(buffer, "%u %u", &n_jobs, &n_machines) != 2) {
+      cerr << "Error: Invalid first line. Expected: jobs machines." << endl;
+      return 1;//testa se a primeira linha do arquivo tem jobs e machines
+    }
+    cout << "jobs = " << n_jobs << ", machines = " << n_machines << endl;
 
-    cout  << "\nmean = " << mean_bsf_fitness << ", std = " << std_bsf_fitness << endl;
-    free(bsf_fitness_array);
+    // Read the second line (header) and ignore it
+    file.getline(buffer, sizeof(buffer)); 
+
+    // Read every line of jobs and store in vector jobs
+    for (int i = 0; i < n_jobs; ++i) {
+      if (!file.getline(buffer, sizeof(buffer))) {
+        cerr << "Error: Not enough lines in the input file for job data." << endl;
+        return 1;//testa se o arquivo tem linhas suficientes para os jobs
+      }
+      std::string linha(buffer);
+      cout << linha << endl;
+    }
+    while (file.getline(buffer, sizeof(buffer))) {
+      std::string linha(buffer);
+      cout << linha << endl;
+    }
+
+    //  incluir chamada das funções polinomiais do npfs_test_func()
   }
-  //  incluir chamada das funções polinomiais do npfs_test_func()
   cleanup_binary_func();
   return 0;
 }
