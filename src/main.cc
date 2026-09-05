@@ -23,7 +23,7 @@ unsigned int g_max_num_evaluations;
 const int MAX_JOBS = 500;
 unsigned int n_jobs;
 unsigned int n_machines;
-unsigned int jobs[MAX_JOBS];
+unsigned int jobs[MAX_JOBS];// Array to store the maximum time for each job
 
 
 int g_pop_size;
