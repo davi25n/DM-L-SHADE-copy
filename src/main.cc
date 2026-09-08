@@ -178,7 +178,7 @@ int main(int argc, char **argv) {
       std::string linha(buffer);
       cout << linha << endl;
     }*/
-
+    
     //  incluir chamada das funções polinomiais do npfs_test_func()
   }
   
