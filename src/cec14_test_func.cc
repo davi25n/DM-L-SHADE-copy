@@ -70,6 +70,8 @@ static int binary_func_initialized = 0;
 void npfs_test_func()
 {}
 
+//cec14_test_func chamado em search algorithm linha 20
+//recebe pop[i], &fitness[i], problema_size, 1(numero de funções), function_number
 void cec14_test_func(double *x, double *f, int nx, int mx,int func_num)
 {
 	int cf_num=10,i,j;
@@ -83,7 +85,7 @@ void cec14_test_func(double *x, double *f, int nx, int mx,int func_num)
 
 	if (ini_flag==0)
 	{
-		if (func_num == 31)
+		if (func_num == 32)//se der erro corrigir para 31
     	{
         	ini_flag = 1;  // marca como inicializado para não entrar de novo
         	n_flag = nx;
@@ -127,7 +129,7 @@ void cec14_test_func(double *x, double *f, int nx, int mx,int func_num)
 					printf("\nError: there is insufficient memory available!\n");
 				for (i=0; i<nx*nx; i++)
 				{
-					fscanf(fpt,"%lf",&M[i]);
+					fscanf(fpt,"%lf",&M[i]);//M é a matrix dos numeros contidos no arquivo do problema do tipo M _ _D_.txt
 				}
 			}
 			else
@@ -157,7 +159,7 @@ void cec14_test_func(double *x, double *f, int nx, int mx,int func_num)
 				printf("\nError: there is insufficient memory available!\n");
 				for(i=0;i<nx;i++)
 				{
-					fscanf(fpt,"%lf",&OShift[i]);
+					fscanf(fpt,"%lf",&OShift[i]);//OShift é o vetor que guarda os numeros do arquivo do tipo shift_data_.txt
 				}
 			}
 			else
@@ -220,9 +222,9 @@ void cec14_test_func(double *x, double *f, int nx, int mx,int func_num)
 			}
 		
 
-			n_flag=nx;
-			func_flag=func_num;
-			ini_flag=1;
+			n_flag=nx;//n_flag = dimensões
+			func_flag=func_num;//func_flag = número da função
+			ini_flag=1;//ini_flag = numero de funções
 			//printf("Function has been initialized!\n");
 		}
 	}

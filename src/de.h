@@ -15,6 +15,7 @@
 #include <string.h>
 #include <vector>
 #include <math.h>
+#include "conversão.hpp"
 
 using namespace std;
 
@@ -32,6 +33,7 @@ extern int g_pop_size;
 extern int g_memory_size;
 extern double g_p_best_rate;
 extern double g_arc_rate;
+extern FlowShop::FlowShopEngine *g_flowshop_engine;
 
 void cec14_test_func(double *, double *,int,int,int);
 

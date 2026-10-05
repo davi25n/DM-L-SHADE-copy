@@ -15,9 +15,16 @@ void searchAlgorithm::initializeParameters() {
   initializeFitnessFunctionParameters();
 }
 
+//usado em LSHADE na linha 32 e por DMLSHADE na linha 44.
+//recebe como parametros o vetor pop e o vetor fitness correspondente
 void searchAlgorithm::evaluatePopulation(const vector<Individual> &pop, vector<Fitness> &fitness) {
   for (int i = 0; i < pop_size; i++) {
-    cec14_test_func(pop[i],  &fitness[i], problem_size, 1, function_number);
+    if (g_flowshop_engine != nullptr) {
+      vector<double> keys(pop[i], pop[i] + problem_size);
+      fitness[i] = g_flowshop_engine->evaluate(keys, "PFS", "Tardiness");
+    } else {
+      cec14_test_func(pop[i],  &fitness[i], problem_size, 1, function_number);
+    }
   }
 }
 
@@ -27,7 +34,7 @@ void searchAlgorithm::initializeFitnessFunctionParameters() {
   max_region = 100.0;
   min_region = -100.0;
 
-  optimum = function_number * 100;
+  optimum = g_flowshop_engine != nullptr ? 0 : function_number * 100;
 }
 
 //set best solution (bsf_solution) and its fitness value (bsf_fitness) in the initial population
@@ -51,7 +58,7 @@ Individual searchAlgorithm::makeNewIndividual() {
   Individual individual = (variable*)malloc(sizeof(variable) * problem_size);
 
   for (int i = 0; i < problem_size; i++) {
-    individual[i] = ((max_region - min_region) * randDouble()) + min_region;
+    individual[i] = ((max_region - min_region) * randDouble()) + min_region;//sorteio de um valor aleatorio entre min_region e max_region
   }
 
   return individual;

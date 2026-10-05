@@ -1,7 +1,9 @@
 HEADER = de.h
+
 TARGET = solver
 
-OBJS := $(patsubst %.cc,%.o,$(shell find src -name '*.cc'))
+OBJS := $(patsubst %.cc,%.o,$(shell find src -name '*.cc')) \
+	$(patsubst %.cpp,%.o,$(shell find src -name '*.cpp'))
 CC = g++
 OPTION = -std=c++14 -O3
 LIB_DIR = ./src/lib
@@ -16,8 +18,9 @@ CFLAGS = -I$(INC_DIR) -I$(INC_DIR)/pyclustering
 $(TARGET): $(OBJS)
 	$(CC) -o $(TARGET) $(OBJS) $(OPTION) $(LDFLAGS)
 
+%.o: %.cpp
+	$(CC) $(CFLAGS) -c $< -o $@
 %.o: %.cc
 	$(CC) $(CFLAGS) -c $< -o $@
-
 clean:
-	rm -rf src/*.o $(TARGET)
+	rm -f $(OBJS) $(TARGET)
