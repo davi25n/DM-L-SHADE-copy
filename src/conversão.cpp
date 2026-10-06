@@ -102,7 +102,7 @@ namespace FlowShop {
             for (int j = 0; j < num_jobs; ++j) {
                 // Cálculo de release times (r_m)
                 if (m > 0) {
-                    for (int k = 0; k < m; ++k) r_m[j] += p_matrix[j][k];//exceto primeiro caos
+                    for (int k = 0; k < m; ++k) r_m[j] += p_matrix[j][k];//exceto primeiro caso
                 }
                 // Cálculo de modified due dates (d_m)
                 double tempo_posterior = 0.0;
@@ -182,6 +182,7 @@ namespace FlowShop {
     // =====================================================================
     // 3. BUCKET SORT / ARGSORT DECODING
     // =====================================================================
+    // Recebe keys do dm-l-shade, e coloca cada uma em um job para posteriormente ordenar aleatóriamente os jobs
     std::vector<int> FlowShopEngine::bucket_sort_decode(const std::vector<double>& keys, int start_idx, int length) const {
         std::vector<int> indices(length);
         std::iota(indices.begin(), indices.end(), 0);

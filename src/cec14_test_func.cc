@@ -85,7 +85,7 @@ void cec14_test_func(double *x, double *f, int nx, int mx,int func_num)
 
 	if (ini_flag==0)
 	{
-		if (func_num == 32)//se der erro corrigir para 31
+		if (func_num == 31)//se der erro corrigir para 31
     	{
         	ini_flag = 1;  // marca como inicializado para não entrar de novo
         	n_flag = nx;

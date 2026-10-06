@@ -31,7 +31,7 @@ void cleanup_binary_func();
 int main(int argc, char **argv) {
   string instance_path;
   //number of runs
-  int num_runs = 51;
+  int num_runs = 10;
     //dimension size. please select from 10, 30, 50, 100
   g_problem_size = 10;
   //available number of fitness evaluations 
@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
     }
   }
   //int i = function_start - 1;
-  /*if (function_start == function_end) {
+  if (function_start == function_end) {
     g_function_number = function_start;
     cout << "\n-------------------------------------------------------" << endl;
     cout << "Function = " << g_function_number << ", Dimension size = " << g_problem_size << "\n" << endl;
@@ -119,7 +119,7 @@ int main(int argc, char **argv) {
 
     cout  << "\nmean = " << mean_bsf_fitness << ", std = " << std_bsf_fitness << endl;
     free(bsf_fitness_array);
-  }*/
+  }
   
   delete g_flowshop_engine;
   cleanup_binary_func();
