@@ -119,17 +119,17 @@ class FlowShopEngine: ### VERSÃO UNIFICADA TARDINESS + MAKESPAN
         return np.argsort(keys)
 
     def evaluate(self, keys, mode="PFS", objective="Tardiness"):
-        self.cfo_count += 1
-        n, m = self.n_jobs, self.n_machines
+        #self.cfo_count += 1
+        n, m = 4, 2
 
         # 1. Decodificação
-        if mode == "PFS":
-            seq = self.bucket_sort_decode(keys[:n])
-            sequences = [seq] * m
-        else:
+        #if mode == "PFS":
+        seq = self.bucket_sort_decode(keys)
+        sequences = [seq] * m
+        '''else:
             sequences = []
             for i in range(m):
-                sequences.append(self.bucket_sort_decode(keys[i*n : (i+1)*n]))
+                sequences.append(self.bucket_sort_decode(keys[i*n : (i+1)*n]))'''
 
         # 2. Cálculo das matrizes de tempo (Finish Times)
         # finish_times[i, j] é o tempo de término do job j na máquina i
@@ -147,7 +147,7 @@ class FlowShopEngine: ### VERSÃO UNIFICADA TARDINESS + MAKESPAN
             for job_idx in sequences[i]:
                 # O job precisa terminar na máquina i-1 E a máquina i precisa estar livre
                 start = max(time_on_m, finish_times[i-1, job_idx])
-                finish_times[i, job_idx] = start + self.proc_times[job_idx, i]
+                finish_times[i, job_idx] = start + proc_times[job_idx, i]
                 time_on_m = finish_times[i, job_idx]
 
         # 3. Retorno do Objetivo
@@ -193,3 +193,5 @@ class FlowShopEngine: ### VERSÃO UNIFICADA TARDINESS + MAKESPAN
             # Total Tardiness = soma de max(0, C_j - d_j)
             tardiness = np.maximum(0, finish_times[m-1, :] - self.due_dates)
             return np.sum(tardiness)
+proc_times = [[1, 4], [86, 21], [28, 67], [32, 17]]
+print(FlowShopEngine.evaluate([70.129799456396029, 19.264765977517115, 40.627033422061743, -64.569978213203129], "PFS", "Tardiness"))

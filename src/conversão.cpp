@@ -202,23 +202,23 @@ namespace FlowShop {
         int n = n_jobs;
         int m = n_machines;
 
-        std::vector<std::vector<int>> sequences;
+        std::vector<int> sequences;
 
         if (mode == "PFS") {
             std::vector<int> seq = bucket_sort_decode(keys, 0, n);
-            sequences.assign(m, seq);
-        } else {
+            sequences.assign(seq.begin(), seq.end());
+        } /*else {
             for (int i = 0; i < m; ++i) {
                 sequences.push_back(bucket_sort_decode(keys, i * n, n));
             }
-        }
+        }*/
 
         std::vector<std::vector<double>> finish_times(m, std::vector<double>(n, 0.0));
 
         // Primeira máquina
-        double current_time = 0;
+        /*double current_time = 0;
         for (int job_idx : sequences[0]) {
-            current_time += proc_times[job_idx][0];
+            current_time += proc_times[job_idx][0];//error
             finish_times[0][job_idx] = current_time;
         }
 
@@ -230,7 +230,17 @@ namespace FlowShop {
                 finish_times[i][job_idx] = start + proc_times[job_idx][i];
                 time_on_m = finish_times[i][job_idx];
             }
+        }*/
+
+        std::vector<double> machine_times(m, 0.0);
+        for (int job_idx : sequences) {
+            for (int i = 0; i < m; i++) {
+                double start_time = machine_times[i];
+                finish_times[i][job_idx] = machine_times[i] + proc_times[job_idx][i];
+                machine_times[i] = finish_times[i][job_idx];
+            }
         }
+
 
         if (objective == "Makespan") {
             double max_makespan = 0.0;
@@ -238,13 +248,22 @@ namespace FlowShop {
                 max_makespan = std::max(max_makespan, finish_times[m - 1][j]);
             }
             return max_makespan;
-        } else if (objective == "Tardiness") {
-            double total_tardiness = 0.0;
-            for (int j = 0; j < n; ++j) {
-                double tard = finish_times[m - 1][j] - static_cast<double>(due_dates[j]);
-                if (tard > 0) total_tardiness += tard;
+        } else if (objective == "Tardiness") {// Implementar uma solução que usa somente a maquina melhor pra cada job
+            std::vector<double> total_tardiness(2, 0.0);
+            for (int k = 0; k < m; ++k) {
+                for (int j = 0; j < n; ++j) {
+                    if (k == 0) {
+                    double tard = finish_times[0][j] - static_cast<double>(due_dates[j]);
+                    if (tard > 0) total_tardiness[0] += tard;
+                    }
+                    else {
+                    double tard = finish_times[k][j] - static_cast<double>(due_dates[j]);
+                    if (tard > 0) total_tardiness[1] += tard;}
+                } 
+                if (total_tardiness[1] < total_tardiness[0] && k > 0) total_tardiness[0] = total_tardiness[1];
+                total_tardiness[1] = 0.0;
             }
-            return total_tardiness;
+            return total_tardiness[0];
         }
 
         return 0.0;

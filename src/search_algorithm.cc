@@ -34,7 +34,7 @@ void searchAlgorithm::initializeFitnessFunctionParameters() {
   max_region = 100.0;
   min_region = -100.0;
 
-  optimum = g_flowshop_engine != nullptr ? 0 : function_number * 100;
+  optimum = g_flowshop_engine != nullptr ? 0 : function_number * 100;//incluir calcular lower bound
 }
 
 //set best solution (bsf_solution) and its fitness value (bsf_fitness) in the initial population
