@@ -9,6 +9,9 @@
 */
 
 #include "de.h"
+#include "conversão.hpp"
+
+#include <stdexcept>
 
 double *OShift,*M,*y,*z,*x_bound;
 int ini_flag=0,n_flag,func_flag,*SS;
@@ -21,13 +24,14 @@ int g_pop_size;
 double g_arc_rate;
 int g_memory_size;
 double g_p_best_rate;
+FlowShop::FlowShopEngine *g_flowshop_engine = nullptr;
 
 void cleanup_binary_func();
 
 int main(int argc, char **argv) {
-  FILE *file = NULL;
+  string instance_path;
   //number of runs
-  int num_runs = 51;
+  int num_runs = 10;
     //dimension size. please select from 10, 30, 50, 100
   g_problem_size = 10;
   //available number of fitness evaluations 
@@ -64,32 +68,38 @@ int main(int argc, char **argv) {
       break;
     }
     else if (strcmp(argv[i], "--i") == 0 && i + 1 < argc) {
-      file = fopen(argv[i + 1], "r");
-      if (file == NULL)
-      {
-        cerr << "Error: Cannot open input file for reading." << endl;
-        return 1;
-      }
-      function_start = function_end = 1; // Set to 1 since we are reading from a file
-      break;
+      instance_path = "src/instancias/" + string(argv[i + 1]);
+      function_start = 1;
+      function_end = 1;
     }
   }
-  if ((file == NULL) && (function_start != function_end)) {
+  if (instance_path.empty() && function_start != function_end) {
     cerr << "Error: No input file specified. Please use the --i option to provide an input file." << endl;
     return 1;
   }
-  if (file != NULL) {
-    fclose(file);
-  }//retirar quando o codigo para usar o file for implantado
 
-  for (int i = function_start - 1; i < function_end; i++) {
-    g_function_number = i + 1;
+  FlowShop::InstanceData instance;
+  if (!instance_path.empty()) {
+    try {
+      instance = FlowShop::FlowShopEngine::carregar_instancia_txt(instance_path);
+      g_problem_size = instance.n_jobs;
+      g_max_num_evaluations = (g_problem_size * 10000);
+      g_pop_size = (int)round(g_problem_size * 18);
+      g_flowshop_engine = new FlowShop::FlowShopEngine(instance.n_jobs, instance.n_machines, instance.proc_times, instance.due_dates);
+    } catch (const std::exception &error) {
+      cerr << "Error loading instance: " << error.what() << endl;
+      return 1;
+    }
+  }
+  //int i = function_start - 1;
+  if (function_start == function_end) {
+    g_function_number = function_start;
     cout << "\n-------------------------------------------------------" << endl;
     cout << "Function = " << g_function_number << ", Dimension size = " << g_problem_size << "\n" << endl;
 
     Fitness *bsf_fitness_array = (Fitness*)malloc(sizeof(Fitness) * num_runs);
     Fitness mean_bsf_fitness = 0;
-    Fitness std_bsf_fitness = 0;
+    Fitness std_bsf_fitness = 0; 
 
     for (int j = 0; j < num_runs; j++) { 
       //searchAlgorithm *alg = new LSHADE();
@@ -110,7 +120,8 @@ int main(int argc, char **argv) {
     cout  << "\nmean = " << mean_bsf_fitness << ", std = " << std_bsf_fitness << endl;
     free(bsf_fitness_array);
   }
-  //  incluir chamada das funções polinomiais do npfs_test_func()
+  
+  delete g_flowshop_engine;
   cleanup_binary_func();
   return 0;
 }
