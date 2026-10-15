@@ -31,8 +31,8 @@ void searchAlgorithm::evaluatePopulation(const vector<Individual> &pop, vector<F
 void searchAlgorithm::initializeFitnessFunctionParameters() {
   //epsilon is an acceptable error value.
   epsilon = pow(10.0, -8);
-  max_region = 100.0;
-  min_region = -100.0;
+  max_region = g_flowshop_engine != nullptr ? 1: 100.0;
+  min_region = g_flowshop_engine != nullptr ? 0: -100.0;
 
   optimum = g_flowshop_engine != nullptr ? 0 : function_number * 100;//incluir calcular lower bound
 }
