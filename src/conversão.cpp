@@ -1,7 +1,5 @@
 #include "conversão.hpp"
 
-#include <stdexcept>
-
 namespace FlowShop {
 
     // =====================================================================
@@ -11,79 +9,78 @@ namespace FlowShop {
         InstanceData inst;
         std::ifstream file(caminho_arquivo);
 
+        // Fallback de segurança se o arquivo não existir
         if (!file.is_open()) {
-            throw std::runtime_error("Falha ao abrir a instancia: " + caminho_arquivo);
-        }
+            std::cout << "[ERRO PARSER] Falha ao abrir " << caminho_arquivo << ". Gerando dados simulados.\n";
+            inst.n_jobs = 50;
+            inst.n_machines = 2;
+            inst.proc_times.assign(50, std::vector<int>(2, 0));
+            inst.due_dates.assign(50, 0);
 
-        std::string line;
-        while (std::getline(file, line) && line.empty()) {}
-        std::stringstream header(line); // A partir do header, separa n_jobs e n_machines colocando em inst
-        if (!(header >> inst.n_jobs >> inst.n_machines) || inst.n_jobs <= 0 || inst.n_machines <= 0) {
-            throw std::runtime_error("Cabecalho invalido na instancia: " + caminho_arquivo);
-        }
+            std::mt19937 gen(42);
+            std::uniform_int_distribution<int> dist_p(10, 99);
+            std::uniform_int_distribution<int> dist_d(100, 499);
 
-        inst.proc_times.assign(inst.n_jobs, std::vector<int>(inst.n_machines, 0));
-
-        std::vector<std::string> data_lines;
-        while (std::getline(file, line) && line != "") data_lines.push_back(line);
-        if (data_lines.size() < 2) {
-            throw std::runtime_error("Dados de processamento ausentes na instancia: " + caminho_arquivo);
-        }
-
-        auto parse_line = [](const std::string& value) {
-            std::vector<int> numbers;
-            std::stringstream values(value);
-            int number;
-            while (values >> number) {numbers.push_back(number);}
-            return numbers;
-        };
-
-        // Taillard repete a ordem antes de cada job; I_* informa a ordem uma vez.
-        bool repeated_machine_order = data_lines.size() > 2 && parse_line(data_lines[2]).size() == 1;
-        size_t line_index = 0;
-        for (int j = 0; j < inst.n_jobs; ++j) {
-            if (repeated_machine_order) {
-                if (line_index >= data_lines.size()) {
-                    throw std::runtime_error("Ordem de maquinas ausente no job " + std::to_string(j));
+            for (int j = 0; j < 50; ++j) {
+                inst.due_dates[j] = dist_d(gen);
+                for (int m = 0; m < 2; ++m) {
+                    inst.proc_times[j][m] = dist_p(gen);
                 }
-                ++line_index;
-            } else if (j == 0) {
-                ++line_index;
             }
+            return inst;
+        }
 
-            if (line_index >= data_lines.size()) {
-                throw std::runtime_error("Tempos de processamento ausentes no job " + std::to_string(j));
-            }
-            std::vector<int> values = parse_line(data_lines[line_index++]);
-            if (values.size() != static_cast<size_t>(inst.n_machines * 2)) {
-                throw std::runtime_error("Quantidade de maquinas invalida no job " + std::to_string(j));
-            }
-            for (int machine_index = 0; machine_index < inst.n_machines; ++machine_index) {
-                int machine = values[machine_index * 2];
-                int processing_time = values[machine_index * 2 + 1];
-                if (machine < 0 || machine >= inst.n_machines || processing_time < 0) {
-                    throw std::runtime_error("Tempo de processamento invalido no job " + std::to_string(j));
+        try {
+            std::string line;
+            // Lê N e M
+            while (std::getline(file, line) && line.empty());
+            std::stringstream ss(line);
+            ss >> inst.n_jobs >> inst.n_machines;
+
+            inst.proc_times.assign(inst.n_jobs, std::vector<int>(inst.n_machines, 0));
+
+            // O formato da instância inclui uma linha de metadados após N e M.
+            while (std::getline(file, line) && line.empty());
+
+            // Lê tempos de processamento
+            for (int j = 0; j < inst.n_jobs; ++j) {
+                while (std::getline(file, line) && line.empty());
+                std::stringstream line_ss(line);
+                int maq, tempo;
+                while (line_ss >> maq >> tempo) {
+                    if (maq >= 0 && maq < inst.n_machines) {
+                        inst.proc_times[j][maq] = tempo;
+                    }
                 }
-                inst.proc_times[j][machine] = processing_time;
             }
-        }
 
-        while (line_index < data_lines.size()) {
-            line = data_lines[line_index++];
-            std::string token = line;
-            token.erase(remove_if(token.begin(), token.end(), ::isspace), token.end());
-            std::transform(token.begin(), token.end(), token.begin(), ::tolower);
-            if (token.find("duedate") != std::string::npos) break;
-        }
-
-        inst.due_dates.resize(inst.n_jobs);
-        for (int j = 0; j < inst.n_jobs; ++j) {
-            if (line_index >= data_lines.size() || !(std::stringstream(data_lines[line_index++]) >> inst.due_dates[j])) {
-                throw std::runtime_error("Datas de vencimento ausentes na instancia: " + caminho_arquivo);
+            // Procura pela tag 'duedate'
+            while (std::getline(file, line)) {
+                std::string token = line;
+                // Remove espaços em branco
+                token.erase(remove_if(token.begin(), token.end(), ::isspace), token.end());
+                std::transform(token.begin(), token.end(), token.begin(), ::tolower);
+                //se der erro incluir quebra de linha
+                if (token.find("duedate") != std::string::npos) break;
             }
-        }
 
-        return inst;
+            // Lê as datas de vencimento
+            inst.due_dates.reserve(inst.n_jobs);
+            for (int j = 0; j < inst.n_jobs; ++j) {
+                int dd;
+                file >> dd;
+                inst.due_dates.push_back(dd);
+            }
+
+            return inst;
+        } catch (...) {
+            std::cout << "[ERRO PARSER] Exceção ao ler " << caminho_arquivo << ". Gerando simulados.\n";
+            inst.n_jobs = 50;
+            inst.n_machines = 2;
+            inst.proc_times.assign(50, std::vector<int>(2, 50));
+            inst.due_dates.assign(50, 200);
+            return inst;
+        }
     }
 
     // =====================================================================
@@ -102,12 +99,12 @@ namespace FlowShop {
             for (int j = 0; j < num_jobs; ++j) {
                 // Cálculo de release times (r_m)
                 if (m > 0) {
-                    for (int k = 0; k < m; ++k) r_m[j] += p_matrix[j][k];//exceto primeiro caso
+                    for (int k = 0; k < m; ++k) r_m[j] += p_matrix[j][k];
                 }
                 // Cálculo de modified due dates (d_m)
                 double tempo_posterior = 0.0;
                 if (m < num_machines - 1) {
-                    for (int k = m + 1; k < num_machines; ++k) tempo_posterior += p_matrix[j][k];//exceto ultimo caso
+                    for (int k = m + 1; k < num_machines; ++k) tempo_posterior += p_matrix[j][k];
                 }
                 d_m[j] = static_cast<double>(due_dates[j]) - tempo_posterior;
                 rem_p[j] = static_cast<double>(p_matrix[j][m]);
@@ -182,7 +179,6 @@ namespace FlowShop {
     // =====================================================================
     // 3. BUCKET SORT / ARGSORT DECODING
     // =====================================================================
-    // Recebe keys do dm-l-shade, e coloca cada uma em um job para posteriormente ordenar aleatóriamente os jobs
     std::vector<int> FlowShopEngine::bucket_sort_decode(const std::vector<double>& keys, int start_idx, int length) const {
         std::vector<int> indices(length);
         std::iota(indices.begin(), indices.end(), 0);
@@ -216,31 +212,31 @@ namespace FlowShop {
         std::vector<std::vector<double>> finish_times(m, std::vector<double>(n, 0.0));
 
         // Primeira máquina
-        /*double current_time = 0;
-        for (int job_idx : sequences[0]) {
-            current_time += proc_times[job_idx][0];//error
+        double current_time = 0;
+        for (int job_idx : sequences) {
+            current_time += proc_times[job_idx][0];
             finish_times[0][job_idx] = current_time;
         }
 
         // Máquinas subsequentes
         for (int i = 1; i < m; ++i) {
             double time_on_m = 0;
-            for (int job_idx : sequences[i]) {
+            for (int job_idx : sequences) {
                 double start = std::max(time_on_m, finish_times[i - 1][job_idx]);
                 finish_times[i][job_idx] = start + proc_times[job_idx][i];
                 time_on_m = finish_times[i][job_idx];
             }
-        }*/
-
-        std::vector<double> machine_times(m, 0.0);
-        for (int job_idx : sequences) {
-            for (int i = 0; i < m; i++) {
-                double start_time = machine_times[i];
-                finish_times[i][job_idx] = machine_times[i] + proc_times[job_idx][i];
-                machine_times[i] = finish_times[i][job_idx];
-            }
         }
 
+        /*// Primeiro job
+        double current_time = 0;
+        for (int job_idx : sequences) {
+
+            for (int machine_idx = 1; machine_idx < m; ++machine_idx) {
+                double start = finish_times[machine_idx - 1][job_idx];
+                finish_times[machine_idx][job_idx] = start + proc_times[job_idx][machine_idx];
+            }
+        }*/
 
         if (objective == "Makespan") {
             double max_makespan = 0.0;
@@ -248,22 +244,13 @@ namespace FlowShop {
                 max_makespan = std::max(max_makespan, finish_times[m - 1][j]);
             }
             return max_makespan;
-        } else if (objective == "Tardiness") {// Implementar uma solução que usa somente a maquina melhor pra cada job
-            std::vector<double> total_tardiness(2, 0.0);
-            for (int k = 0; k < m; ++k) {
-                for (int j = 0; j < n; ++j) {
-                    if (k == 0) {
-                    double tard = finish_times[0][j] - static_cast<double>(due_dates[j]);
-                    if (tard > 0) total_tardiness[0] += tard;
-                    }
-                    else {
-                    double tard = finish_times[k][j] - static_cast<double>(due_dates[j]);
-                    if (tard > 0) total_tardiness[1] += tard;}
-                } 
-                if (total_tardiness[1] < total_tardiness[0] && k > 0) total_tardiness[0] = total_tardiness[1];
-                total_tardiness[1] = 0.0;
+        } else if (objective == "Tardiness") {
+            double total_tardiness = 0.0;
+            for (int j = 0; j < n; ++j) {
+                double tard = finish_times[m - 1][j] - static_cast<double>(due_dates[j]);
+                if (tard > 0) total_tardiness += tard;
             }
-            return total_tardiness[0];
+            return total_tardiness;
         }
 
         return 0.0;

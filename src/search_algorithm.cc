@@ -21,7 +21,7 @@ void searchAlgorithm::evaluatePopulation(const vector<Individual> &pop, vector<F
   for (int i = 0; i < pop_size; i++) {
     if (g_flowshop_engine != nullptr) {
       vector<double> keys(pop[i], pop[i] + problem_size);
-      fitness[i] = g_flowshop_engine->evaluate(keys, "PFS", "Tardiness");
+      fitness[i] = g_flowshop_engine->evaluate(keys, "PFS", "Makespan"); // colocar o if else antes do for
     } else {
       cec14_test_func(pop[i],  &fitness[i], problem_size, 1, function_number);
     }

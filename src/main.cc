@@ -83,8 +83,8 @@ int main(int argc, char **argv) {
     try {
       instance = FlowShop::FlowShopEngine::carregar_instancia_txt(instance_path);
       g_problem_size = instance.n_jobs;
-      g_max_num_evaluations = (g_problem_size * 10000)/10;
-      g_pop_size = (int)round((g_problem_size * 18)/9);
+      g_max_num_evaluations = (g_problem_size * 10000);
+      g_pop_size = (int)round(g_problem_size * 18);
       g_flowshop_engine = new FlowShop::FlowShopEngine(instance.n_jobs, instance.n_machines, instance.proc_times, instance.due_dates);
     } catch (const std::exception &error) {
       cerr << "Error loading instance: " << error.what() << endl;
