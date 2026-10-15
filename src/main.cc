@@ -70,6 +70,8 @@ int main(int argc, char **argv) {
         cerr << "Error: Cannot open input file for reading." << endl;
         return 1;
       }
+      function_start = function_end = 1; // Set to 1 since we are reading from a file
+      break;
     }
   }
   if ((file == NULL) && (function_start != function_end)) {
