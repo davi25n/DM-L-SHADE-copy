@@ -3,7 +3,7 @@ HEADER = de.h
 TARGET = solver
 
 OBJS := $(patsubst %.cc,%.o,$(shell find src -name '*.cc')) \
-	$(patsubst %.cpp,%.o,$(shell find src -name '*.cpp'))
+	$(patsubst %.cpp,%.o,$(shell find src -name '*.cpp' ! -path 'src/função/*'))
 CC = g++
 OPTION = -std=c++14 -O3
 LIB_DIR = ./src/lib
