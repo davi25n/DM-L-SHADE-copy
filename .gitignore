@@ -30,8 +30,17 @@
 *.exe
 *.out
 *.app
+solver
 
+<<<<<<< HEAD
 solver
 
 .vscode/
 /função/
+=======
+.vscode
+
+__pycache__/
+conversão.py
+
+>>>>>>> origin/main
