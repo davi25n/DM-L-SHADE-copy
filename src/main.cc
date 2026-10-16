@@ -12,6 +12,7 @@
 #include "conversão.hpp"
 
 #include <stdexcept>
+#include <chrono>
 
 double *OShift,*M,*y,*z,*x_bound;
 int ini_flag=0,n_flag,func_flag,*SS;
@@ -27,6 +28,15 @@ double g_p_best_rate;
 FlowShop::FlowShopEngine *g_flowshop_engine = nullptr;
 
 void cleanup_binary_func();
+
+// prints a duration in seconds with fixed notation, keeping cout's previous format
+static void print_seconds(double seconds) {
+  std::ios_base::fmtflags old_flags = cout.flags();
+  std::streamsize old_precision = cout.precision();
+  cout << std::fixed << std::setprecision(4) << seconds << " s";
+  cout.flags(old_flags);
+  cout.precision(old_precision);
+}
 
 int main(int argc, char **argv) {
   string instance_path;
@@ -100,14 +110,21 @@ int main(int argc, char **argv) {
     Fitness *bsf_fitness_array = (Fitness*)malloc(sizeof(Fitness) * num_runs);
     Fitness mean_bsf_fitness = 0;
     Fitness std_bsf_fitness = 0; 
+    double *run_time_array = (double*)malloc(sizeof(double) * num_runs);
+    auto total_start = std::chrono::steady_clock::now();
 
     for (int j = 0; j < num_runs; j++) { 
       //searchAlgorithm *alg = new LSHADE();
       int max_elite_size = std::round(elite_rate * g_pop_size);
       int number_of_patterns = std::round(clusters_rate * max_elite_size);
       searchAlgorithm *alg = new DMLSHADE(max_elite_size, number_of_patterns, mining_generation_step);
+      auto run_start = std::chrono::steady_clock::now();
       bsf_fitness_array[j] = alg->run();
-      cout << j + 1 << "th run, " << "error value = " << bsf_fitness_array[j] << endl;
+      auto run_end = std::chrono::steady_clock::now();
+      run_time_array[j] = std::chrono::duration<double>(run_end - run_start).count();
+      cout << j + 1 << "th run, " << "error value = " << bsf_fitness_array[j] << ", time = ";
+      print_seconds(run_time_array[j]);
+      cout << endl;
     }
   
     for (int j = 0; j < num_runs; j++) mean_bsf_fitness += bsf_fitness_array[j];
@@ -117,8 +134,20 @@ int main(int argc, char **argv) {
     std_bsf_fitness /= num_runs;
     std_bsf_fitness = sqrt(std_bsf_fitness);
 
+    double total_time = std::chrono::duration<double>(std::chrono::steady_clock::now() - total_start).count();
+    double mean_time = 0, std_time = 0;
+    for (int j = 0; j < num_runs; j++) mean_time += run_time_array[j];
+    mean_time /= num_runs;
+    for (int j = 0; j < num_runs; j++) std_time += pow((mean_time - run_time_array[j]), 2.0);
+    std_time = sqrt(std_time / num_runs);
+
     cout  << "\nmean = " << mean_bsf_fitness << ", std = " << std_bsf_fitness << endl;
+    cout  << "time: mean = "; print_seconds(mean_time);
+    cout  << ", std = "; print_seconds(std_time);
+    cout  << ", total = "; print_seconds(total_time);
+    cout  << endl;
     free(bsf_fitness_array);
+    free(run_time_array);
   }
   
   delete g_flowshop_engine;

@@ -31,8 +31,7 @@
 *.out
 *.app
 
-.vscode
 solver
 
-
+.vscode/
 /função/
